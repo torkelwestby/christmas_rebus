@@ -209,25 +209,44 @@ export default function HomePage() {
                 : 'border-red-200 hover:border-red-300'
             }`}
           >
-            {/* Rebus Image - Full width with natural aspect ratio */}
-            <div className="relative w-full bg-gradient-to-br from-red-100 to-green-100">
-              <div className="relative w-full" style={{ paddingBottom: '30%' }}>
-                <Image
-                  src={`/rebus${rebus.id}.png`}
-                  alt={`Rebus ${rebus.id}`}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, 896px"
-                  priority={rebus.id <= 2}
-                />
-                {rebus.solved && (
-                  <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center">
-                    <div className="bg-green-500 text-white rounded-full p-6 shadow-2xl">
-                      <span className="text-5xl">✓</span>
-                    </div>
-                  </div>
-                )}
+            {/* Rebus Images - Top and Bottom */}
+            <div className="relative w-full">
+              {/* Top Image */}
+              <div className="relative w-full bg-gradient-to-br from-red-100 to-green-100 border-b-2 border-white">
+                <div className="relative w-full" style={{ paddingBottom: '30%' }}>
+                  <Image
+                    src={`/rebus${rebus.id}_top.png`}
+                    alt={`Rebus ${rebus.id} - Topp`}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 896px"
+                    priority={rebus.id <= 2}
+                  />
+                </div>
               </div>
+
+              {/* Bottom Image */}
+              <div className="relative w-full bg-gradient-to-br from-green-100 to-red-100">
+                <div className="relative w-full" style={{ paddingBottom: '30%' }}>
+                  <Image
+                    src={`/rebus${rebus.id}_bottom.png`}
+                    alt={`Rebus ${rebus.id} - Bunn`}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 896px"
+                    priority={rebus.id <= 2}
+                  />
+                </div>
+              </div>
+
+              {/* Checkmark overlay when solved */}
+              {rebus.solved && (
+                <div className="absolute inset-0 bg-green-500/20 flex items-center justify-center pointer-events-none">
+                  <div className="bg-green-500 text-white rounded-full p-6 shadow-2xl">
+                    <span className="text-5xl">✓</span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Input Section */}
