@@ -102,14 +102,31 @@ export async function POST(request: NextRequest) {
 
     const normalizedAnswer = normalizeText(userAnswer);
 
-    // Sjekk hvilke nøkkelord som er med og hvilke som mangler
-    const missingKeywords = rebus.keywords.filter(
-      keyword => !normalizedAnswer.includes(normalizeText(keyword))
-    );
+    // Split i ord for bedre matching
+    const answerWords = normalizedAnswer.split(/\s+/);
 
-    const foundKeywords = rebus.keywords.filter(
-      keyword => normalizedAnswer.includes(normalizeText(keyword))
-    );
+    // Sjekk hvilke nøkkelord som finnes i svaret
+    // Må være eksakte ord-match, ikke bare substring
+    const missingKeywords: string[] = [];
+    const foundKeywords: string[] = [];
+
+    for (const keyword of rebus.keywords) {
+      const normalizedKeyword = normalizeText(keyword);
+
+      // Sjekk om keyword finnes som komplett ord i svaret
+      // Tillat at keyword er del av et lengre ord hvis det er sammensatt
+      const isFound = answerWords.some(word =>
+        word === normalizedKeyword || // eksakt match
+        (normalizedKeyword.length > 3 && word.includes(normalizedKeyword)) || // substring for lengre ord
+        (word.length > 3 && normalizedKeyword.includes(word) && word.length >= normalizedKeyword.length * 0.8) // fuzzy match
+      );
+
+      if (isFound) {
+        foundKeywords.push(keyword);
+      } else {
+        missingKeywords.push(keyword);
+      }
+    }
 
     const isCorrect = missingKeywords.length === 0;
 
@@ -135,7 +152,7 @@ export async function POST(request: NextRequest) {
           content: `Du er en hjelpsom julenisse som gir feedback på rebus-svar.
 
 VIKTIG RETNINGSLINJER:
-- Gi konkret feedback på hva brukeren har riktig og hva som mangler
+- Gi konkret feedback på hva brukeren har riktig og hva som mangler uten å noen gang røpe ordene direkte
 - IKKE røp svaret direkte, men hint diskret til elementene i rebusen
 - Vær kortfattet (2-3 setninger MAX)
 - Vær morsom og julete

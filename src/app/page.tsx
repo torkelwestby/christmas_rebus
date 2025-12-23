@@ -159,12 +159,24 @@ export default function HomePage() {
         <h1 className="text-4xl sm:text-5xl font-bold text-green-800 mb-4">
           Julerebus 2025
         </h1>
-        <p className="text-lg text-gray-700 max-w-2xl mx-auto mb-4">
-          Løs alle rebusene og lås opp eksklusive opplevelser for 2026!
-        </p>
+        <div className="max-w-2xl mx-auto mb-6 space-y-3">
+          <p className="text-base text-gray-600 italic">
+            Jøss, sånn går det når man ikke har blekk tilgjengelig på printeren.
+            Da kommer rebusen på nett i stedet!
+          </p>
+          <p className="text-lg text-gray-700 font-medium">
+            Hver rebus beskriver en opplevelse du låser opp for 2026 når du finner løsningen.
+          </p>
+          <p className="text-base text-gray-600">
+            Du får litt hjelp på veien hver gang du bommer - så bare prøv deg fram! 🎅
+          </p>
+          <p className="text-sm text-gray-500">
+            Lykke til! ✨
+          </p>
+        </div>
         <div className="inline-block bg-white/80 backdrop-blur-sm rounded-full px-6 py-3 shadow-lg border-2 border-green-200">
           <span className="text-2xl font-bold text-green-700">
-            {solvedCount} / 5 løst
+            {solvedCount} / 5 låst opp
           </span>
         </div>
       </div>
