@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+
+  h1 {
+    @apply text-2xl font-bold text-gray-900;
+  }
+
+  h2 {
+    @apply text-xl font-semibold text-gray-800;
+  }
+
+  h3 {
+    @apply text-lg font-medium text-gray-700;
+  }
+
+  p {
+    @apply text-base text-gray-700;
+  }
+
+  label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  /* Crisp input styling */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-xl 
+           focus:ring-2 focus:ring-primary-400 focus:border-primary-500 
+           outline-none transition-all bg-white
+           hover:border-gray-300
+           text-gray-900 placeholder-gray-400;
+  }
+
+  /* Crisp select styling */
+  select {
+    @apply appearance-none cursor-pointer
+           bg-white
+           hover:bg-gray-50
+           font-medium
+           transition-all duration-200;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+    padding-right: 2.5rem;
+  }
+
+  select:focus {
+    @apply bg-white;
+  }
+
+  select:hover {
+    @apply shadow-sm;
+  }
+
+  /* Crisp select options */
+  select option {
+    @apply py-2 px-4 bg-white text-gray-900;
+  }
+
+  textarea {
+    @apply resize-none;
+  }
+
+  button {
+    @apply font-medium transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  .container-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  /* Animasjoner */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideInFromTop {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes zoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .animate-in {
+    animation-duration: 0.2s;
+    animation-fill-mode: both;
+  }
+  
+  .fade-in {
+    animation-name: fadeIn;
+  }
+  
+  .slide-in-from-top-2 {
+    animation-name: slideInFromTop;
+  }
+  
+  .zoom-in-95 {
+    animation-name: zoomIn;
+  }
+}

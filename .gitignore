@@ -1,0 +1,40 @@
+# Next.js cache
+.next/
+.swp
+.eslintcache
+.next/cache/
+
+# Tooling
+/.turbo
+/.idea
+/.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Yarn/PNPM
+.pnpm-store/
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# OS
+Thumbs.db
+
+# Misc caches
+*.log
+.cache/
+.swc/
+.parcel-cache/
+.venv/
+.venv/
+node_modules/
+.env.local
+.env
+.venv/
+pipeline.txt
+steps.txt
+structure.txt
+jest.config.js
+jest.setup.js
