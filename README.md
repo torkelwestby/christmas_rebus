@@ -1,159 +1,94 @@
-# inspiration_bank
+# Julerebus 2025 🎄
 
-Kjør disse i terminal for å få noen pakker:
-python -m venv .venv
-.\.venv\Scripts\activate
-pip install -r requirements.txt
+En interaktiv julerebus-app hvor brukere løser gåter for å låse opp opplevelser for 2026.
 
+## Funksjoner
 
+- 5 unike rebuser med bilder
+- AI-drevet feedback ved feil svar (via OpenAI)
+- Fyrverkeri-animasjon ved riktig svar
+- Responsivt design med julete tema
+- Progress tracking (X/5 løst)
 
-# Idéinnsamlingsapp
+## Teknologi
 
-Produksjonsklar app for å samle inn og administrere ideer med Airtable som backend.
-
-## Features
-
-✅ Rask innsending fra mobil og desktop  
-✅ Bildeopplasting via Cloudinary  
-✅ Oversikt med søk, filter og paginering  
-✅ Rate limiting (5 kall/10 sek)  
-✅ PWA-støtte for mobil  
-✅ TypeScript + Zod validering  
-
-## Stack
-
-- Next.js 14 App Router
+- Next.js 14
+- React
 - TypeScript
 - Tailwind CSS
-- React Hook Form + Zod
-- Airtable API
-- Cloudinary (unsigned upload)
+- OpenAI API
 
-## Setup
+## Kom i gang
 
-### 1. Installer dependencies
-
+1. Installer dependencies:
 ```bash
 npm install
 ```
 
-### 2. Konfigurer miljøvariabler
-
-Opprett `.env.local`:
-
-```env
-AIRTABLE_TOKEN=pat_xxx
-AIRTABLE_BASE_ID=appuubMFIhd5QTbzf
-AIRTABLE_TABLE_ID=tblSPz6ovHbS8Lpa5
-CLOUDINARY_CLOUD_NAME=xxx
-CLOUDINARY_UPLOAD_PRESET=unsigned_xxx
-```
-
-### 3. Kjør lokalt
-
+2. Kjør utviklingsserver:
 ```bash
 npm run dev
 ```
 
-Åpne [http://localhost:3000](http://localhost:3000)
+3. Åpne [http://localhost:3000](http://localhost:3000)
 
-### 4. Deploy til Vercel
+## Rebus-løsninger
 
-```bash
-vercel
-```
+Appen sjekker at alle nøkkelord er med i svaret (symboler som komma ignoreres):
 
-Eller koble repo til Vercel Dashboard og legg inn miljøvariabler under Project Settings.
+1. Pizza, øl og konkurranse på Oslo bowling
+2. Helaften med vin og tartar på bislett
+3. Fransk eventyrlig michelin opplevelse på mon oncl
+4. Dagstur øst for Oslo med spa og velvære på the Well
+5. En sliten søndag på den gule måke
 
-## Airtable-oppsett
+## Airtable Database
 
-Tabellen "Ideer" må ha følgende felter:
-
-- **Tittel** (text) - `fldKXo4ub5pqqTjG9`
-- **Beskrivelse** (long text) - `fld0mPPNrE5pRxENI`
-- **Type** (single select) - `fldhBleuXFNt9bWLP`
-  - Verdier: "Inspirasjon", "Ide klar for vurdering til innovasjonsporteføljen"
-- **Stage** (single select) - `fldTOdb9VgP0MdtNN`
-  - Verdier: "Idégenerering", "Idéutforsking", "Problem/Løsning", "Produkt/Marked", "Skalering", "Arkivert"
-- **Bilde** (attachment) - `fldz4NQq8uolOnbRY`
-- **Innsender** (text) - `fldfG5fBJ8E9iNVa1`
-- **Dato sendt inn** (date) - `fld9Hi3Emxlhoi9GE`
-
-## Cloudinary-oppsett
-
-1. Opprett unsigned upload preset i Cloudinary Dashboard
-2. Settings → Upload → Add upload preset
-3. Signing Mode: Unsigned
-4. Kopier preset-navnet til `CLOUDINARY_UPLOAD_PRESET`
-
-## Testing
+Fremgang lagres i Airtable. Kolonnene opprettes automatisk med setup-scriptet:
 
 ```bash
-npm test
+npm run setup-airtable
 ```
+
+Dette oppretter følgende kolonner i din Airtable-base:
+
+**For hver rebus (1-5):**
+- `rebusX_solved` - Checkbox (om rebusen er løst)
+- `rebusX_date` - Date (planlagt dato)
+- `rebusX_time` - Single line text (planlagt tidspunkt)
+
+Appen bruker en enkelt rad i Airtable for å lagre all fremgang.
+
+**Manuelt oppsett** (om du foretrekker det):
+Se [scripts/setup-airtable.js](scripts/setup-airtable.js) for detaljer om felttyper og options.
+
+## API
+
+Appen bruker OpenAI API for å generere spesifikke og morsomme tilbakemeldinger når brukere svarer feil.
+Feedbacken analyserer hva brukeren har riktig og gir hint om manglende ord.
+
+API-nøklene er konfigurert i `.env.local`.
+
+## Deploy til Vercel
+
+```bash
+vercel deploy
+```
+
+Husk å legge til `OPENAI_API_KEY` i Vercel environment variables.
 
 ## Struktur
 
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Skjemaside
-│   ├── ideas/
-│   │   └── page.tsx          # Oversiktsside
-│   ├── api/
-│   │   └── ideas/
-│   │       └── route.ts      # API endpoints
-│   ├── layout.tsx
-│   └── globals.css
-├── lib/
-│   ├── airtable.ts           # Airtable fetch wrapper
-│   ├── ratelimit.ts          # Rate limiting
-│   └── schemas.ts            # Zod schemas
-└── components/
-    ├── IdeaForm.tsx          # Hovedskjema
-    └── IdeaList.tsx          # Oversiktsliste
-
+│   ├── page.tsx                    # Hovedside med alle rebusene
+│   ├── layout.tsx                  # Layout med julete styling
+│   ├── globals.css                 # Styling + animasjoner
+│   └── api/
+│       └── check-rebus/
+│           └── route.ts            # API for rebus-sjekking
 public/
-├── bama.png                  # Valgfri logo
-└── manifest.json             # PWA manifest
+├── rebus1.png - rebus5.png         # Rebus-bilder
+└── manifest.json
 ```
-
-## API
-
-### POST /api/ideas
-
-Send inn ny idé.
-
-**Body:**
-```json
-{
-  "title": "Min idé",
-  "description": "Beskrivelse...",
-  "type": "Inspirasjon",
-  "stage": "Idégenerering",
-  "submitter": "Navn Navnesen",
-  "imageUrl": "https://res.cloudinary.com/..."
-}
-```
-
-**Response:** `201` eller `4xx/5xx`
-
-### GET /api/ideas
-
-Hent ideer med paginering.
-
-**Query params:**
-- `max` (default: 50)
-- `offset` (fra forrige respons)
-
-**Response:**
-```json
-{
-  "records": [...],
-  "offset": "itrXXX/recYYY"
-}
-```
-
-## Lisens
-
-Privat prosjekt for intern bruk.

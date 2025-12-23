@@ -7,9 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "test": "jest",
+    "setup-airtable": "node scripts/setup-airtable.js"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "next": "14.2.15",
     "openai": "^4.77.0",
     "react": "^18.3.1",
