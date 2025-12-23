@@ -5,16 +5,11 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/**
- * Rebus-struktur:
- * - parts representerer semantiske deler av setningen
- * - keywords brukes kun til matching, IKKE til hint direkte
- * - hintStyle beskriver HVA noe er, ikke hva det heter
- */
 type RebusPart = {
   tag: 'FOOD' | 'DRINK' | 'ACTIVITY' | 'PLACE' | 'VIBE' | 'TIME';
   keywords: string[];
   hintStyle: string;
+  nearMiss?: string[]; // ord som er "nære", men feil
 };
 
 type Rebus = {
@@ -28,64 +23,94 @@ const REBUS_SOLUTIONS: Rebus[] = [
   {
     id: 1,
     fullAnswer: 'Pizza, øl og konkurranse på Oslo bowling',
-    description: 'Pizza-emoji, øl-emoji, konkurs-ransel-bildet, Oslo, og bowling-delen',
+    description: 'Pizza-emoji, øl-emoji, konkurs-ransel, Oslo, bowling',
     parts: [
-      { tag: 'FOOD', keywords: ['pizza'], hintStyle: 'noe man spiser, ofte delt i biter' },
+      { tag: 'FOOD', keywords: ['pizza'], hintStyle: 'mat man ofte deler i biter' },
       { tag: 'DRINK', keywords: ['øl'], hintStyle: 'noe man drikker, ofte i glass' },
-      { tag: 'ACTIVITY', keywords: ['konkurranse'], hintStyle: 'noe der man måler seg mot andre eller spiller mot noen' },
+      {
+        tag: 'ACTIVITY',
+        keywords: ['konkurranse'],
+        hintStyle: 'spill eller kamp der man måler seg mot andre',
+        nearMiss: ['spill', 'lek', 'dart', 'biljard'],
+      },
       { tag: 'PLACE', keywords: ['oslo'], hintStyle: 'en kjent by og hovedstad' },
-      { tag: 'PLACE', keywords: ['bowling'], hintStyle: 'et sted der kuler ruller og poeng telles' },
+      {
+        tag: 'PLACE',
+        keywords: ['bowling'],
+        hintStyle: 'et sted der man spiller med store kuler',
+        nearMiss: ['dart', 'biljard'],
+      },
     ],
   },
   {
     id: 2,
     fullAnswer: 'Helaften med vin og tartar på bislett',
-    description: 'Helmelk, julaften, vin, tyv som tar, biceps og Lett-restaurant',
+    description: 'Helmelk, julaften, vin, tyv som tar, biceps, Lett',
     parts: [
       { tag: 'TIME', keywords: ['helaften'], hintStyle: 'noe som varer hele kvelden' },
-      { tag: 'DRINK', keywords: ['vin'], hintStyle: 'noe som ofte serveres i glass til mat' },
-      { tag: 'FOOD', keywords: ['tartar'], hintStyle: 'en rett laget av noe rått, ofte delt i små biter' },
-      { tag: 'PLACE', keywords: ['bislett'], hintStyle: 'et område i byen, kjent for idrett og trening' },
+      { tag: 'DRINK', keywords: ['vin'], hintStyle: 'drikke som ofte serveres til middag' },
+      {
+        tag: 'FOOD',
+        keywords: ['tartar'],
+        hintStyle: 'rett laget av noe rått, ofte hakket',
+        nearMiss: ['biff', 'kjøtt', 'carpaccio'],
+      },
+      { tag: 'PLACE', keywords: ['bislett'], hintStyle: 'område i byen, kjent for idrett' },
     ],
   },
   {
     id: 3,
     fullAnswer: 'Fransk eventyrlig michelin opplevelse på mon oncl',
-    description: 'Frankrike-flagg, eventyr, Michelle Obama, Lars Monsen, og onkel',
+    description: 'Frankrike, eventyr, Michelin, Mon Oncl',
     parts: [
-      { tag: 'VIBE', keywords: ['fransk'], hintStyle: 'noe med utenlandsk preg, ofte assosiert med mat og kultur' },
-      { tag: 'VIBE', keywords: ['eventyrlig'], hintStyle: 'noe som føles spesielt, nesten som et eventyr' },
-      { tag: 'VIBE', keywords: ['michelin'], hintStyle: 'noe som handler om svært høy kvalitet på mat' },
-      { tag: 'PLACE', keywords: ['mon'], hintStyle: 'første del av et navn, bygget ved å fjerne noe' },
-      { tag: 'PLACE', keywords: ['oncl'], hintStyle: 'andre del av navnet, uttales som et familiemedlem' },
+      { tag: 'VIBE', keywords: ['fransk'], hintStyle: 'utenlandsk preg, mye kultur og mat' },
+      { tag: 'VIBE', keywords: ['eventyrlig'], hintStyle: 'noe som føles ekstra spesielt' },
+      {
+        tag: 'VIBE',
+        keywords: ['michelin'],
+        hintStyle: 'ekstremt høy kvalitet på mat',
+        nearMiss: ['fin', 'dyr', 'gourmet'],
+      },
+      { tag: 'PLACE', keywords: ['mon'], hintStyle: 'første del av et navn' },
+      { tag: 'PLACE', keywords: ['oncl'], hintStyle: 'andre del, høres ut som et familiemedlem' },
     ],
   },
   {
     id: 4,
     fullAnswer: 'Dagstur øst for Oslo med spa og velvære på the Well',
-    description: 'Dagsfylla, turmat, kompass øst, Oslo, spade, Brønnøya Vel og værmelding',
+    description: 'Dagstur, øst, Oslo, spa, velvære, Well',
     parts: [
-      { tag: 'TIME', keywords: ['dagstur'], hintStyle: 'en kort tur som ikke varer over natten' },
-      { tag: 'PLACE', keywords: ['øst'], hintStyle: 'en retning, vist med kompass eller pil' },
+      { tag: 'TIME', keywords: ['dagstur'], hintStyle: 'kort tur uten overnatting' },
+      { tag: 'PLACE', keywords: ['øst'], hintStyle: 'en retning' },
       { tag: 'PLACE', keywords: ['oslo'], hintStyle: 'byen man reiser fra' },
-      { tag: 'ACTIVITY', keywords: ['spa'], hintStyle: 'noe som handler om ro, varme og avslapning' },
-      { tag: 'VIBE', keywords: ['velvære'], hintStyle: 'noe som handler om å føle seg bra' },
-      { tag: 'PLACE', keywords: ['well'], hintStyle: 'et sted med engelsk navn, knyttet til avslapning' },
+      {
+        tag: 'ACTIVITY',
+        keywords: ['spa'],
+        hintStyle: 'avslapning, varme, basseng',
+        nearMiss: ['bad', 'svømmehall'],
+      },
+      { tag: 'VIBE', keywords: ['velvære'], hintStyle: 'å føle seg bra' },
+      { tag: 'PLACE', keywords: ['well'], hintStyle: 'sted med engelsk navn' },
     ],
   },
   {
     id: 5,
     fullAnswer: 'En sliten søndag på den gule måke',
-    description: 'Jenny (pen), Nissene i skjul, Søndag-serien og gul måke',
+    description: 'Sliten, søndag, gul måke',
     parts: [
       { tag: 'TIME', keywords: ['søndag'], hintStyle: 'en dag i helgen' },
-      { tag: 'VIBE', keywords: ['sliten'], hintStyle: 'følelsen av å være trøtt eller ferdig med uka' },
-      { tag: 'PLACE', keywords: ['måke'], hintStyle: 'et dyr man ofte ser ved sjøen, her brukt symbolsk' },
+      { tag: 'VIBE', keywords: ['sliten'], hintStyle: 'trøtt og ferdig med uka' },
+      {
+        tag: 'PLACE',
+        keywords: ['måke'],
+        hintStyle: 'en fugl, her brukt symbolsk',
+        nearMiss: ['burger', 'fastfood'],
+      },
     ],
   },
 ];
 
-// --- Utils ---
+// ---------------- Utils ----------------
 function normalizeText(text: string): string {
   return text
     .toLowerCase()
@@ -93,108 +118,84 @@ function normalizeText(text: string): string {
     .trim();
 }
 
-// --- API ---
+// ---------------- API ----------------
 export async function POST(request: NextRequest) {
-  try {
-    const { rebusId, userAnswer } = await request.json();
+  const { rebusId, userAnswer } = await request.json();
 
-    if (!rebusId || !userAnswer) {
-      return NextResponse.json({ error: 'Missing rebusId or userAnswer' }, { status: 400 });
-    }
-
-    const rebus = REBUS_SOLUTIONS.find(r => r.id === rebusId);
-    if (!rebus) {
-      return NextResponse.json({ error: 'Invalid rebusId' }, { status: 400 });
-    }
-
-    const normalizedAnswer = normalizeText(userAnswer);
-    const answerWords = normalizedAnswer.split(/\s+/);
-
-    const foundParts: RebusPart[] = [];
-    const missingParts: RebusPart[] = [];
-
-    for (const part of rebus.parts) {
-      const found = part.keywords.some(k =>
-        answerWords.some(w =>
-          w === normalizeText(k) ||
-          w.includes(normalizeText(k)) ||
-          normalizeText(k).includes(w)
-        )
-      );
-
-      if (found) foundParts.push(part);
-      else missingParts.push(part);
-    }
-
-    if (missingParts.length === 0) {
-      return NextResponse.json({
-        correct: true,
-        message: '🎉 Gratulerer! Du har låst opp denne opplevelsen for 2026!',
-      });
-    }
-
-    // Progress tekst (kun tall, ikke ord)
-    const progressText =
-      foundParts.length === 0
-        ? 'Ingen deler funnet ennå'
-        : foundParts.length === rebus.parts.length - 1
-        ? 'Kun én del mangler'
-        : `Funnet ${foundParts.length} av ${rebus.parts.length} deler`;
-
-    // AI-feedback
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `
-Du gir korte, vennlige hint til en rebus.
-
-DU HAR FULL KUNNSKAP OM FASIT, MEN DU MÅ FØLGE DISSE REGLENE:
-- Aldri skriv eller bruk fasitord som brukeren ikke selv har skrevet.
-- Aldri nevne konkrete steder, navn eller objekter direkte.
-- Bruk kun assosiative, menneskelige beskrivelser.
-- Maks 2–3 setninger.
-- Maks én emoji.
-
-DU KAN:
-- Bekrefte fremgang.
-- Hinte til hva slags TYPE ting som mangler (sted, aktivitet, stemning).
-- Beskrive funksjon eller bruk (f.eks. “noe man bærer på ryggen”).
-
-KONTEKST:
-Rebusen viser: ${rebus.description}
-Fremgang: ${progressText}
-
-Mangler disse typene deler:
-${missingParts.map(p => `- ${p.tag}: ${p.hintStyle}`).join('\n')}
-
-Gi nå en kort, vennlig feedback som hjelper brukeren videre uten å røpe noe.
-          `,
-        },
-        {
-          role: 'user',
-          content: userAnswer,
-        },
-      ],
-      temperature: 0.8,
-      max_tokens: 120,
-    });
-
-    const feedback =
-      completion.choices[0]?.message?.content ||
-      'Hmm, ikke helt riktig ennå. Se nøye på alle bildene og prøv igjen!';
-
-    return NextResponse.json({
-      correct: false,
-      message: feedback,
-      progress: {
-        found: foundParts.length,
-        total: rebus.parts.length,
-      },
-    });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json({ error: 'Failed to check rebus' }, { status: 500 });
+  const rebus = REBUS_SOLUTIONS.find(r => r.id === rebusId);
+  if (!rebus) {
+    return NextResponse.json({ error: 'Invalid rebusId' }, { status: 400 });
   }
+
+  const words = normalizeText(userAnswer).split(/\s+/);
+
+  const found: RebusPart[] = [];
+  const missing: RebusPart[] = [];
+  const nearHits: RebusPart[] = [];
+
+  for (const part of rebus.parts) {
+    const exact = part.keywords.some(k => words.includes(normalizeText(k)));
+    const near = part.nearMiss?.some(n => words.includes(normalizeText(n)));
+
+    if (exact) found.push(part);
+    else if (near) nearHits.push(part);
+    else missing.push(part);
+  }
+
+  if (missing.length === 0) {
+    return NextResponse.json({
+      correct: true,
+      message: '🎉 Gratulerer! Du har løst rebusen!',
+    });
+  }
+
+  // --- Deterministisk status ---
+  const summary = {
+    found: found.map(p => p.tag),
+    near: nearHits.map(p => p.tag),
+    missing: missing.map(p => p.tag),
+  };
+
+  // --- AI: kun formulering ---
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `
+Du formulerer feedback på en rebus.
+
+REGLER:
+- Aldri skriv fasitord.
+- Ikke rett brukeren eksplisitt.
+- Bruk deterministisk status som sannhet.
+- Vær konkret, men ikke avslørende.
+- 2–3 setninger, maks én emoji.
+
+STATUS:
+Riktig funnet: ${summary.found.join(', ') || 'ingenting'}
+Nære forsøk: ${summary.near.join(', ') || 'ingen'}
+Manglende deler: ${summary.missing.join(', ')}
+
+BESKRIVELSE AV REBUS:
+${rebus.description}
+
+Oppgave:
+1) Si tydelig hva brukeren har fått til.
+2) Kommenter evt. nære bom (f.eks. feil type spill).
+3) Pek konkret på hva som mangler (kategori + hintStyle).
+`,
+      },
+      { role: 'user', content: userAnswer },
+    ],
+    temperature: 0.6,
+    max_tokens: 120,
+  });
+
+  return NextResponse.json({
+    correct: false,
+    message:
+      completion.choices[0]?.message?.content ??
+      'Du er inne på noe, men mangler fortsatt noen deler.',
+  });
 }
