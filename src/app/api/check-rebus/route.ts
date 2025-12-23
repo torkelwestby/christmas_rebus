@@ -9,15 +9,14 @@ type RebusTag = 'FOOD' | 'DRINK' | 'ACTIVITY' | 'PLACE' | 'VIBE' | 'TIME';
 
 type RebusPart = {
   tag: RebusTag;
-  keywords: string[];      // ord vi matcher som "treff"
-  hintType: string;        // menneskelig kategori, brukes i hint (ikke fasitord)
-  nearMiss?: string[];     // ord som ofte er "nærme, men feil" (brukes som bomOrd)
+  keywords: string[];   // ord vi matcher som "treff"
+  hintType: string;     // menneskelig kategori, brukes i hint (ikke fasitord)
 };
 
 type Rebus = {
   id: number;
-  fullAnswer: string;      // fasitsetning (kan sendes til AI, men AI får ikke lov å lekke)
-  description: string;     // generell kontekst om bilder/elementer
+  fullAnswer: string;   // fasitsetning (AI får vite den, men får ikke lov å lekke)
+  description: string;  // generell kontekst om elementene
   parts: RebusPart[];
 };
 
@@ -28,20 +27,10 @@ const REBUS_SOLUTIONS: Rebus[] = [
     description: 'Pizza-emoji, øl-emoji, konkurs+r-anse, Oslo, og bowling-delen.',
     parts: [
       { tag: 'FOOD', keywords: ['pizza'], hintType: 'mat' },
-      { tag: 'DRINK', keywords: ['øl'], hintType: 'drikke', nearMiss: ['vin', 'brus'] },
-      {
-        tag: 'ACTIVITY',
-        keywords: ['konkurranse'],
-        hintType: 'aktivitet',
-        nearMiss: ['spill', 'lek', 'dart', 'biljard'],
-      },
-      { tag: 'PLACE', keywords: ['oslo'], hintType: 'sted', nearMiss: ['byen', 'hovedstad'] },
-      {
-        tag: 'PLACE',
-        keywords: ['bowling'],
-        hintType: 'sted',
-        nearMiss: ['dart', 'biljard', 'kino'],
-      },
+      { tag: 'DRINK', keywords: ['øl'], hintType: 'drikke' },
+      { tag: 'ACTIVITY', keywords: ['konkurranse'], hintType: 'aktivitet' },
+      { tag: 'PLACE', keywords: ['oslo'], hintType: 'sted' },
+      { tag: 'PLACE', keywords: ['bowling'], hintType: 'sted' },
     ],
   },
   {
@@ -49,20 +38,10 @@ const REBUS_SOLUTIONS: Rebus[] = [
     fullAnswer: 'Helaften med vin og tartar på bislett',
     description: 'Helmelk minus melk + julaften minus jul, vin, tar x2, bis+lett.',
     parts: [
-      { tag: 'TIME', keywords: ['helaften'], hintType: 'tidspunkt', nearMiss: ['kveld', 'aften'] },
-      { tag: 'DRINK', keywords: ['vin'], hintType: 'drikke', nearMiss: ['øl', 'drink'] },
-      {
-        tag: 'FOOD',
-        keywords: ['tartar'],
-        hintType: 'mat',
-        nearMiss: ['biff', 'carpaccio', 'taco'],
-      },
-      {
-        tag: 'PLACE',
-        keywords: ['bislett'],
-        hintType: 'sted',
-        nearMiss: ['majorstuen', 'st. hanshaugen', 'frogner'],
-      },
+      { tag: 'TIME', keywords: ['helaften'], hintType: 'tidspunkt' },
+      { tag: 'DRINK', keywords: ['vin'], hintType: 'drikke' },
+      { tag: 'FOOD', keywords: ['tartar'], hintType: 'mat' },
+      { tag: 'PLACE', keywords: ['bislett'], hintType: 'sted' },
     ],
   },
   {
@@ -70,11 +49,11 @@ const REBUS_SOLUTIONS: Rebus[] = [
     fullAnswer: 'Fransk eventyrlig michelin opplevelse på mon oncl',
     description: 'Frankrike-flagg, eventyr + lig, michelle(-le + in), mon(sen-), onkel.',
     parts: [
-      { tag: 'VIBE', keywords: ['fransk'], hintType: 'stemning', nearMiss: ['italiensk', 'spansk'] },
-      { tag: 'VIBE', keywords: ['eventyrlig'], hintType: 'stemning', nearMiss: ['romantisk', 'fancy'] },
-      { tag: 'VIBE', keywords: ['michelin'], hintType: 'kvalitet', nearMiss: ['gourmet', 'fine dining'] },
-      { tag: 'PLACE', keywords: ['mon'], hintType: 'sted', nearMiss: ['monsen'] },
-      { tag: 'PLACE', keywords: ['oncl'], hintType: 'sted', nearMiss: ['onkel'] },
+      { tag: 'VIBE', keywords: ['fransk'], hintType: 'stemning' },
+      { tag: 'VIBE', keywords: ['eventyrlig'], hintType: 'stemning' },
+      { tag: 'VIBE', keywords: ['michelin'], hintType: 'kvalitet' },
+      { tag: 'PLACE', keywords: ['mon'], hintType: 'sted' },
+      { tag: 'PLACE', keywords: ['oncl'], hintType: 'sted' },
     ],
   },
   {
@@ -82,12 +61,12 @@ const REBUS_SOLUTIONS: Rebus[] = [
     fullAnswer: 'Dagstur øst for Oslo med spa og velvære på the Well',
     description: 'Dagstur, øst, Oslo, spa, velvære, the well.',
     parts: [
-      { tag: 'TIME', keywords: ['dagstur'], hintType: 'tidspunkt', nearMiss: ['tur', 'dag'] },
-      { tag: 'PLACE', keywords: ['øst'], hintType: 'retning', nearMiss: ['vest', 'nord', 'sør'] },
-      { tag: 'PLACE', keywords: ['oslo'], hintType: 'sted', nearMiss: ['byen', 'hovedstad'] },
-      { tag: 'ACTIVITY', keywords: ['spa'], hintType: 'aktivitet', nearMiss: ['bad', 'svømmehall', 'sauna'] },
-      { tag: 'VIBE', keywords: ['velvære'], hintType: 'stemning', nearMiss: ['ro', 'avslapning'] },
-      { tag: 'PLACE', keywords: ['well'], hintType: 'sted', nearMiss: ['vel'] },
+      { tag: 'TIME', keywords: ['dagstur'], hintType: 'tidspunkt' },
+      { tag: 'PLACE', keywords: ['øst'], hintType: 'retning' },
+      { tag: 'PLACE', keywords: ['oslo'], hintType: 'sted' },
+      { tag: 'ACTIVITY', keywords: ['spa'], hintType: 'aktivitet' },
+      { tag: 'VIBE', keywords: ['velvære'], hintType: 'stemning' },
+      { tag: 'PLACE', keywords: ['well'], hintType: 'sted' },
     ],
   },
   {
@@ -95,9 +74,9 @@ const REBUS_SOLUTIONS: Rebus[] = [
     fullAnswer: 'En sliten søndag på den gule måke',
     description: 'En, sliten, søndag, den gule måke (symbolsk).',
     parts: [
-      { tag: 'TIME', keywords: ['søndag'], hintType: 'tidspunkt', nearMiss: ['lørdag', 'helg'] },
-      { tag: 'VIBE', keywords: ['sliten'], hintType: 'stemning', nearMiss: ['trøtt', 'lat'] },
-      { tag: 'PLACE', keywords: ['måke'], hintType: 'sted', nearMiss: ['burger', 'fastfood'] },
+      { tag: 'TIME', keywords: ['søndag'], hintType: 'tidspunkt' },
+      { tag: 'VIBE', keywords: ['sliten'], hintType: 'stemning' },
+      { tag: 'PLACE', keywords: ['måke'], hintType: 'sted' },
     ],
   },
 ];
@@ -142,10 +121,7 @@ function humanizeTag(tag: RebusTag): string {
 function evaluateRebus(rebus: Rebus, userAnswer: string) {
   const userTokens = tokenize(userAnswer);
 
-  const solutionTokens = tokenize(rebus.fullAnswer);
-  const solutionTokenSet = new Set(solutionTokens);
-
-  // Treff (ord i parts.keywords som finnes i svaret)
+  // Treffer basert på parts.keywords
   const hitWords: string[] = [];
   const hitParts: RebusPart[] = [];
   const missingParts: RebusPart[] = [];
@@ -160,18 +136,15 @@ function evaluateRebus(rebus: Rebus, userAnswer: string) {
     }
   }
 
-  // Bom: ord brukeren skrev som ikke finnes i løsningen, og ikke er stopwords.
-  // Vi tar også med nearMiss-ord eksplisitt (for å kunne kommentere "dart" osv).
-  const explicitNearMisses = rebus.parts.flatMap(p => p.nearMiss ?? []).map(normalizeText);
-  const explicitNearMissSet = new Set(explicitNearMisses);
+  // Bom: alle tokens brukeren skrev som ikke er treff og ikke finnes i løsningen
+  // NB: Dette er "streng" bom. Hvis du vil være mildere kan du droppe solution-sjekken.
+  const solutionTokens = tokenize(rebus.fullAnswer);
+  const solutionSet = new Set(solutionTokens);
 
-  const wrongWords = userTokens.filter(w => !solutionTokenSet.has(w) && !hitWords.map(normalizeText).includes(w));
-  const bomWords = unique([
-    ...wrongWords,
-    ...userTokens.filter(w => explicitNearMissSet.has(w)),
-  ]).filter(Boolean);
+  const hitSet = new Set(hitWords.map(normalizeText));
+  const bomWords = unique(userTokens.filter(w => !hitSet.has(w) && !solutionSet.has(w)));
 
-  // Mangler: vi sender ikke ord, kun kategorier
+  // Mangler: send kun kategorier, ikke ord
   const missingCategories = unique(missingParts.map(p => humanizeTag(p.tag)));
 
   const isCorrect = missingParts.length === 0;
@@ -216,7 +189,7 @@ export async function POST(request: NextRequest) {
         ? 'Du er veldig nære – kun én del gjenstår'
         : `Du har truffet ${evaluation.progress.found} av ${evaluation.progress.total} deler`;
 
-    // AI-formulering: tydeligere, mindre abstrakt, men uten å nevne manglende ord
+    // AI får full kontekst og ordlistene, men får ikke lov å nevne manglende ord
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -235,15 +208,15 @@ DU FÅR:
 KRITISKE REGLER:
 1) Du har LOV til å sitere treffOrd og bomOrd eksplisitt.
 2) Du har IKKE LOV til å skrive ord fra løsningen som brukeren ikke allerede har skrevet.
-3) Du har IKKE LOV til å bruke direkte synonymer til manglende ord.
+3) Du har IKKE LOV til å bruke direkte synonymer til ord som mangler.
 4) Du skal hinte til mangler kun ved å beskrive TYPE (sted, aktivitet, mat, drikke, tidspunkt, stemning).
 5) Maks 3 setninger. Maks 1 emoji.
 6) Ikke gjenta hele brukerens svar.
 
 STRUKTUR:
-- Setning 1: Si konkret hva som er riktig (treffOrd) og gi litt ros for fremgang.
-- Setning 2: Si konkret hva som er bom (bomOrd) med en lett spøk eller vink.
-- Setning 3: Si hva slags kategorier som mangler (manglerKategorier) og et mildt hint om å se på de bildene som sannsynligvis representerer disse.
+- Setning 1: Si konkret hva som er riktig (treffOrd) og gi ros for fremgang.
+- Setning 2: Si konkret hva som er bom (bomOrd) med en lett spøk.
+- Setning 3: Si hva slags kategorier som mangler (manglerKategorier) og be dem se etter disse i bildene.
 
 Hvis treffOrd er tom: si at ingenting sitter ennå og foreslå én kategori å starte med.
 Hvis bomOrd er tom: hopp over setning 2.
@@ -277,10 +250,10 @@ Fremgang: ${progressText}
       message: feedback,
       progress: evaluation.progress,
       debug: {
-        // Kan fjernes i prod hvis du ikke vil eksponere dette
-        foundWords: evaluation.hitWords,
-        wrongWords: evaluation.bomWords,
-        missingCategories: evaluation.missingCategories,
+        // Fjern i prod hvis du ikke vil eksponere disse
+        treffOrd: evaluation.hitWords,
+        bomOrd: evaluation.bomWords,
+        manglerKategorier: evaluation.missingCategories,
       },
     });
   } catch (error) {
