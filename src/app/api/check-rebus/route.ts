@@ -5,76 +5,87 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Fasit og hint for hver rebus
-const REBUS_SOLUTIONS = [
+/**
+ * Rebus-struktur:
+ * - parts representerer semantiske deler av setningen
+ * - keywords brukes kun til matching, IKKE til hint direkte
+ * - hintStyle beskriver HVA noe er, ikke hva det heter
+ */
+type RebusPart = {
+  tag: 'FOOD' | 'DRINK' | 'ACTIVITY' | 'PLACE' | 'VIBE' | 'TIME';
+  keywords: string[];
+  hintStyle: string;
+};
+
+type Rebus = {
+  id: number;
+  fullAnswer: string;
+  description: string;
+  parts: RebusPart[];
+};
+
+const REBUS_SOLUTIONS: Rebus[] = [
   {
     id: 1,
-    keywords: ['pizza', 'øl', 'konkurranse', 'oslo', 'bowling'],
     fullAnswer: 'Pizza, øl og konkurranse på Oslo bowling',
-    hints: {
-      pizza: 'pizzaemoji på bildet',
-      øl: 'ølemoji på bildet',
-      konkurranse: 'konkurs minus s, pluss ransel minus l',
-      oslo: 'Oslo kommunevåpen på bildet',
-      bowling: 'bosted minus sted, pluss w, pluss riesling minus ris',
-    },
-    description: 'Pizza-emoji, øl-emoji, konkurs-ransel-bildet, Oslo, og bowling-delen'
+    description: 'Pizza-emoji, øl-emoji, konkurs-ransel-bildet, Oslo, og bowling-delen',
+    parts: [
+      { tag: 'FOOD', keywords: ['pizza'], hintStyle: 'noe man spiser, ofte delt i biter' },
+      { tag: 'DRINK', keywords: ['øl'], hintStyle: 'noe man drikker, ofte i glass' },
+      { tag: 'ACTIVITY', keywords: ['konkurranse'], hintStyle: 'noe der man måler seg mot andre eller spiller mot noen' },
+      { tag: 'PLACE', keywords: ['oslo'], hintStyle: 'en kjent by og hovedstad' },
+      { tag: 'PLACE', keywords: ['bowling'], hintStyle: 'et sted der kuler ruller og poeng telles' },
+    ],
   },
   {
     id: 2,
-    keywords: ['helaften', 'vin', 'tartar', 'bislett'],
     fullAnswer: 'Helaften med vin og tartar på bislett',
-    hints: {
-      helaften: 'helmelk minus melk, pluss julaften minus jul',
-      vin: 'vinemoji',
-      tartar: 'tyv-bildet som tar brukt to ganger',
-      bislett: 'biceps minus sa (altså bissa som slang for biceps), pluss lett-restauranten',
-    },
-    description: 'Helmelk-julaften, vin-emoji, tyv som tar, og biceps-lett'
+    description: 'Helmelk, julaften, vin, tyv som tar, biceps og Lett-restaurant',
+    parts: [
+      { tag: 'TIME', keywords: ['helaften'], hintStyle: 'noe som varer hele kvelden' },
+      { tag: 'DRINK', keywords: ['vin'], hintStyle: 'noe som ofte serveres i glass til mat' },
+      { tag: 'FOOD', keywords: ['tartar'], hintStyle: 'en rett laget av noe rått, ofte delt i små biter' },
+      { tag: 'PLACE', keywords: ['bislett'], hintStyle: 'et område i byen, kjent for idrett og trening' },
+    ],
   },
   {
     id: 3,
-    keywords: ['fransk', 'eventyrlig', 'michelin', 'mon', 'oncl'],
     fullAnswer: 'Fransk eventyrlig michelin opplevelse på mon oncl',
-    hints: {
-      fransk: 'fransk flagg',
-      eventyrlig: 'eventyr-bilde pluss lig',
-      michelin: 'Michelle Obama minus le pluss in',
-      mon: 'Lars Monsen minus sen',
-      oncl: 'onkel (fonetisk)',
-    },
-    description: 'Frankrike-flagg, eventyr, Michelle Obama, Lars Monsen, og onkel'
+    description: 'Frankrike-flagg, eventyr, Michelle Obama, Lars Monsen, og onkel',
+    parts: [
+      { tag: 'VIBE', keywords: ['fransk'], hintStyle: 'noe med utenlandsk preg, ofte assosiert med mat og kultur' },
+      { tag: 'VIBE', keywords: ['eventyrlig'], hintStyle: 'noe som føles spesielt, nesten som et eventyr' },
+      { tag: 'VIBE', keywords: ['michelin'], hintStyle: 'noe som handler om svært høy kvalitet på mat' },
+      { tag: 'PLACE', keywords: ['mon'], hintStyle: 'første del av et navn, bygget ved å fjerne noe' },
+      { tag: 'PLACE', keywords: ['oncl'], hintStyle: 'andre del av navnet, uttales som et familiemedlem' },
+    ],
   },
   {
     id: 4,
-    keywords: ['dagstur', 'øst', 'oslo', 'spa', 'velvære', 'well'],
     fullAnswer: 'Dagstur øst for Oslo med spa og velvære på the Well',
-    hints: {
-      dagstur: 'dagsfylla minus fylla, pluss turmat minus mat',
-      øst: 'kompass med pil mot øst',
-      oslo: 'Oslo kommune på bildet',
-      spa: 'spade minus de',
-      velvære: 'vel fra Brønnøya Vel, pluss været-nyhetene minus t',
-      well: 'vel på engelsk igjen fra Brønnøya vel',
-    },
-    description: 'Dagsfylla-turmat, kompass øst, Oslo, spade, Brønnøya Vel og værmelding'
+    description: 'Dagsfylla, turmat, kompass øst, Oslo, spade, Brønnøya Vel og værmelding',
+    parts: [
+      { tag: 'TIME', keywords: ['dagstur'], hintStyle: 'en kort tur som ikke varer over natten' },
+      { tag: 'PLACE', keywords: ['øst'], hintStyle: 'en retning, vist med kompass eller pil' },
+      { tag: 'PLACE', keywords: ['oslo'], hintStyle: 'byen man reiser fra' },
+      { tag: 'ACTIVITY', keywords: ['spa'], hintStyle: 'noe som handler om ro, varme og avslapning' },
+      { tag: 'VIBE', keywords: ['velvære'], hintStyle: 'noe som handler om å føle seg bra' },
+      { tag: 'PLACE', keywords: ['well'], hintStyle: 'et sted med engelsk navn, knyttet til avslapning' },
+    ],
   },
   {
     id: 5,
-    keywords: ['en', 'sliten', 'søndag', 'gule', 'måke'],
     fullAnswer: 'En sliten søndag på den gule måke',
-    hints: {
-      en: 'Jenny som er pen uten p',
-      sliten: 'karakter fra Nissene i skjul som alltid er sliten',
-      søndag: 'TV-serie med Atle Antonsen som heter søndag',
-      gule: 'fargen gul ikon',
-      måke: 'et bilde av en måke',
-    },
-    description: 'Jenny (pen), Nissene i skjul, Søndag-serien, og gul måke'
+    description: 'Jenny (pen), Nissene i skjul, Søndag-serien og gul måke',
+    parts: [
+      { tag: 'TIME', keywords: ['søndag'], hintStyle: 'en dag i helgen' },
+      { tag: 'VIBE', keywords: ['sliten'], hintStyle: 'følelsen av å være trøtt eller ferdig med uka' },
+      { tag: 'PLACE', keywords: ['måke'], hintStyle: 'et dyr man ofte ser ved sjøen, her brukt symbolsk' },
+    ],
   },
 ];
 
-// Normaliserer tekst for sammenligning
+// --- Utils ---
 function normalizeText(text: string): string {
   return text
     .toLowerCase()
@@ -82,151 +93,108 @@ function normalizeText(text: string): string {
     .trim();
 }
 
+// --- API ---
 export async function POST(request: NextRequest) {
   try {
     const { rebusId, userAnswer } = await request.json();
 
     if (!rebusId || !userAnswer) {
-      return NextResponse.json(
-        { error: 'Missing rebusId or userAnswer' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing rebusId or userAnswer' }, { status: 400 });
     }
 
     const rebus = REBUS_SOLUTIONS.find(r => r.id === rebusId);
     if (!rebus) {
-      return NextResponse.json(
-        { error: 'Invalid rebusId' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid rebusId' }, { status: 400 });
     }
 
     const normalizedAnswer = normalizeText(userAnswer);
-
-    // Split i ord for bedre matching
     const answerWords = normalizedAnswer.split(/\s+/);
 
-    // Sjekk hvilke nøkkelord som finnes i svaret
-    // Må være eksakte ord-match, ikke bare substring
-    const missingKeywords: string[] = [];
-    const foundKeywords: string[] = [];
+    const foundParts: RebusPart[] = [];
+    const missingParts: RebusPart[] = [];
 
-    for (const keyword of rebus.keywords) {
-      const normalizedKeyword = normalizeText(keyword);
-
-      // Sjekk om keyword finnes som komplett ord i svaret
-      // Tillat at keyword er del av et lengre ord hvis det er sammensatt
-      const isFound = answerWords.some(word =>
-        word === normalizedKeyword || // eksakt match
-        (normalizedKeyword.length > 3 && word.includes(normalizedKeyword)) || // substring for lengre ord
-        (word.length > 3 && normalizedKeyword.includes(word) && word.length >= normalizedKeyword.length * 0.8) // fuzzy match
+    for (const part of rebus.parts) {
+      const found = part.keywords.some(k =>
+        answerWords.some(w =>
+          w === normalizeText(k) ||
+          w.includes(normalizeText(k)) ||
+          normalizeText(k).includes(w)
+        )
       );
 
-      if (isFound) {
-        foundKeywords.push(keyword);
-      } else {
-        missingKeywords.push(keyword);
-      }
+      if (found) foundParts.push(part);
+      else missingParts.push(part);
     }
 
-    const isCorrect = missingKeywords.length === 0;
-
-    if (isCorrect) {
+    if (missingParts.length === 0) {
       return NextResponse.json({
         correct: true,
         message: '🎉 Gratulerer! Du har låst opp denne opplevelsen for 2026!',
       });
     }
 
-    // Bygg generell feedback basert på antall riktige/manglende
-    const foundCount = foundKeywords.length;
-    const totalCount = rebus.keywords.length;
+    // Progress tekst (kun tall, ikke ord)
+    const progressText =
+      foundParts.length === 0
+        ? 'Ingen deler funnet ennå'
+        : foundParts.length === rebus.parts.length - 1
+        ? 'Kun én del mangler'
+        : `Funnet ${foundParts.length} av ${rebus.parts.length} deler`;
 
-    // IKKE send fasit-ord til AI - kun generell info
-    let progressHint = '';
-    if (foundCount === 0) {
-      progressHint = 'Du har ikke funnet noen riktige elementer enda.';
-    } else if (foundCount === 1) {
-      progressHint = 'Du har funnet ett riktig element!';
-    } else if (foundCount === totalCount - 1) {
-      progressHint = 'Du er veldig nære! Kun ett element mangler.';
-    } else if (foundCount > totalCount / 2) {
-      progressHint = `Du er godt i gang! Du har ${foundCount} av ${totalCount} elementer.`;
-    } else {
-      progressHint = `Du har funnet ${foundCount} av ${totalCount} elementer.`;
-    }
-
-    // Generer mer spesifikk feedback UTEN å røpe fasit-ord
+    // AI-feedback
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `Du er en hjelpsom julenisse som gir feedback på rebus-svar.
+          content: `
+Du gir korte, vennlige hint til en rebus.
 
-KRITISK VIKTIG - ALDRI GJØR DETTE:
-- ALDRI nevn ord fra fasit som brukeren ikke har skrevet
-- ALDRI si "du mangler [ord fra fasit]"
-- ALDRI gi direkte ord fra svaret
-- ALDRI nevn spesifikke steder, navn eller ting fra fasit
+DU HAR FULL KUNNSKAP OM FASIT, MEN DU MÅ FØLGE DISSE REGLENE:
+- Aldri skriv eller bruk fasitord som brukeren ikke selv har skrevet.
+- Aldri nevne konkrete steder, navn eller objekter direkte.
+- Bruk kun assosiative, menneskelige beskrivelser.
+- Maks 2–3 setninger.
+- Maks én emoji.
 
-I STEDET - GI INDIREKTE HINT:
-- Hint til TYPER elementer: "kanskje mer om aktiviteten?", "hvor skal dette skje?"
-- Hint til BILDENE: "se nøye på alle emoji-ene", "hva viser det siste bildet?"
-- Hint til STRUKTUR: "tenk på hele setningen", "hva er stedet?"
-- Vær morsom og julete
+DU KAN:
+- Bekrefte fremgang.
+- Hinte til hva slags TYPE ting som mangler (sted, aktivitet, stemning).
+- Beskrive funksjon eller bruk (f.eks. “noe man bærer på ryggen”).
 
-REBUS KONTEKST:
+KONTEKST:
 Rebusen viser: ${rebus.description}
-Status: ${progressHint}
+Fremgang: ${progressText}
 
-EKSEMPLER PÅ GOD FEEDBACK basert på fremgang:
+Mangler disse typene deler:
+${missingParts.map(p => `- ${p.tag}: ${p.hintStyle}`).join('\n')}
 
-Hvis 0 elementer funnet:
-- "Oi da! Her må du se nøye på ALLE bildene fra topp til bunn. Kanskje starte med emoji-ene? 🎅"
-- "Ho ho! Dette krever litt ekstra juletitt! Se grundig på hvert eneste bilde - hva forteller de deg? 🎄"
-
-Hvis 1-2 elementer funnet:
-- "God start! Du er på riktig vei, men det er mer å finne. Se nøye på de bildene du kanskje hoppet over! ⭐"
-- "Bra! Men julenissen ser du mangler litt. Hva med resten av bildene? Kanskje noe om stedet? 🎅"
-
-Hvis 3-4 elementer funnet:
-- "Du er godt i gang! Nå mangler det bare litt. Se ekstra nøye på de siste bildene - hva representerer de? 🎄"
-- "Så nære! Du har nesten alt. Kanskje se en gang til på bildene du ikke har brukt enda? ⭐"
-
-Hvis kun 1 element mangler:
-- "Nesten i mål! Du mangler bare ÉN liten ting. Hvilket bilde har du ikke brukt enda? 🎅"
-- "SÅ nære julegaven! Kun ett element gjenstår. Se nøye på alle bildene - hvilket har du glemt? 🎄"
-
-Generer nå en morsom julehilsen (MAX 2-3 setninger) som PASSER fremgangen, UTEN å røpe spesifikke ord.`,
+Gi nå en kort, vennlig feedback som hjelper brukeren videre uten å røpe noe.
+          `,
         },
         {
           role: 'user',
-          content: `Brukerens svar: "${userAnswer}"\n${progressHint}`,
+          content: userAnswer,
         },
       ],
       temperature: 0.8,
       max_tokens: 120,
     });
 
-    const feedback = completion.choices[0]?.message?.content ||
-      '❄️ Hmm, ikke helt riktig ennå! Se nøye på bildene og prøv igjen! 🎄';
+    const feedback =
+      completion.choices[0]?.message?.content ||
+      'Hmm, ikke helt riktig ennå. Se nøye på alle bildene og prøv igjen!';
 
     return NextResponse.json({
       correct: false,
       message: feedback,
-      hint: {
-        totalKeywords: rebus.keywords.length,
-        foundKeywords: foundKeywords.length,
-        missingCount: missingKeywords.length,
-      }
+      progress: {
+        found: foundParts.length,
+        total: rebus.parts.length,
+      },
     });
-
   } catch (error) {
-    console.error('Error checking rebus:', error);
-    return NextResponse.json(
-      { error: 'Failed to check answer' },
-      { status: 500 }
-    );
+    console.error(error);
+    return NextResponse.json({ error: 'Failed to check rebus' }, { status: 500 });
   }
 }
