@@ -11,7 +11,17 @@ interface RebusState {
   isChecking: boolean;
   scheduledDate?: string;
   scheduledTime?: string;
+  solution?: string;
 }
+
+// Fasit for visning når rebus er løst
+const REBUS_SOLUTIONS: { [key: number]: string } = {
+  1: 'Pizza, øl og konkurranse på Oslo Bowling',
+  2: 'Helaften med vin og tartar på Bislett',
+  3: 'Fransk eventyrlig Michelin-opplevelse på Mon Oncl',
+  4: 'Dagstur øst for Oslo med spa og velvære på The Well',
+  5: 'En sliten søndag på den gule måke',
+};
 
 export default function HomePage() {
   const [rebuses, setRebuses] = useState<RebusState[]>([
@@ -71,7 +81,14 @@ export default function HomePage() {
       if (data.correct) {
         setRebuses(prev => prev.map(r =>
           r.id === rebusId
-            ? { ...r, solved: true, feedback: '', isChecking: false, userAnswer: '' }
+            ? {
+                ...r,
+                solved: true,
+                feedback: '',
+                isChecking: false,
+                userAnswer: '',
+                solution: REBUS_SOLUTIONS[rebusId]
+              }
             : r
         ));
 
@@ -162,13 +179,13 @@ export default function HomePage() {
         <div className="max-w-2xl mx-auto mb-6 space-y-3">
           <p className="text-base text-gray-600 italic">
             Jøss, sånn går det når man ikke har blekk tilgjengelig på printeren.
-            Da kommer rebusen på nett i stedet!
+            Da må rebusen på nett!
           </p>
           <p className="text-lg text-gray-700 font-medium">
             Hver rebus beskriver en opplevelse du låser opp for 2026 når du finner løsningen.
           </p>
           <p className="text-base text-gray-600">
-            Du får litt hjelp på veien hver gang du bommer - så bare prøv deg fram! 🎅
+            Rebusene er jammen ikke bare bare, men til gjengjeld får du litt hjelp på veien hver gang du bommer 🎅
           </p>
           <p className="text-sm text-gray-500">
             Lykke til! ✨
@@ -259,9 +276,19 @@ export default function HomePage() {
               ) : (
                 <div className="space-y-3">
                   <div className="p-4 bg-green-50 border-2 border-green-300 rounded-xl">
-                    <p className="text-center text-green-800 font-semibold">
+                    <p className="text-center text-green-800 font-semibold mb-3">
                       🎉 Opplevelse låst opp!
                     </p>
+                    {rebus.solution && (
+                      <div className="mt-3 pt-3 border-t border-green-200">
+                        <p className="text-xs text-green-700 font-medium mb-1 text-center">
+                          Løsningen:
+                        </p>
+                        <p className="text-center text-green-900 font-bold text-lg italic">
+                          "{rebus.solution}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                   {rebus.scheduledDate && (
                     <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-xl text-center">

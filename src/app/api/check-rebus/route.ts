@@ -15,7 +15,7 @@ const REBUS_SOLUTIONS = [
       pizza: 'pizzaemoji på bildet',
       øl: 'ølemoji på bildet',
       konkurranse: 'konkurs minus s, pluss ransel minus l',
-      oslo: 'Oslo på bildet',
+      oslo: 'Oslo kommunevåpen på bildet',
       bowling: 'bosted minus sted, pluss w, pluss riesling minus ris',
     },
     description: 'Pizza-emoji, øl-emoji, konkurs-ransel-bildet, Oslo, og bowling-delen'
@@ -28,7 +28,7 @@ const REBUS_SOLUTIONS = [
       helaften: 'helmelk minus melk, pluss julaften minus jul',
       vin: 'vinemoji',
       tartar: 'tyv-bildet som tar brukt to ganger',
-      bislett: 'biceps minus sa, pluss lett-restauranten',
+      bislett: 'biceps minus sa (altså bissa som slang for biceps), pluss lett-restauranten',
     },
     description: 'Helmelk-julaften, vin-emoji, tyv som tar, og biceps-lett'
   },
@@ -38,7 +38,7 @@ const REBUS_SOLUTIONS = [
     fullAnswer: 'Fransk eventyrlig michelin opplevelse på mon oncl',
     hints: {
       fransk: 'fransk flagg',
-      eventyrlig: 'eventyr pluss lig',
+      eventyrlig: 'eventyr-bilde pluss lig',
       michelin: 'Michelle Obama minus le pluss in',
       mon: 'Lars Monsen minus sen',
       oncl: 'onkel (fonetisk)',
@@ -51,23 +51,24 @@ const REBUS_SOLUTIONS = [
     fullAnswer: 'Dagstur øst for Oslo med spa og velvære på the Well',
     hints: {
       dagstur: 'dagsfylla minus fylla, pluss turmat minus mat',
-      øst: 'kompass som peker øst',
-      oslo: 'Oslo på bildet',
+      øst: 'kompass med pil mot øst',
+      oslo: 'Oslo kommune på bildet',
       spa: 'spade minus de',
-      velvære: 'vel fra Brønnøya Vel, pluss værmelding minus t',
-      well: 'vel på engelsk',
+      velvære: 'vel fra Brønnøya Vel, pluss været-nyhetene minus t',
+      well: 'vel på engelsk igjen fra Brønnøya vel',
     },
     description: 'Dagsfylla-turmat, kompass øst, Oslo, spade, Brønnøya Vel og værmelding'
   },
   {
     id: 5,
-    keywords: ['sliten', 'søndag', 'gule', 'måke'],
+    keywords: ['en', 'sliten', 'søndag', 'gule', 'måke'],
     fullAnswer: 'En sliten søndag på den gule måke',
     hints: {
+      en: 'Jenny som er pen uten p',
       sliten: 'karakter fra Nissene i skjul som alltid er sliten',
-      søndag: 'TV-serie med Atle Antonsen',
-      gule: 'fargen på måken',
-      måke: 'fuglen på bildet (McDonald\'s)',
+      søndag: 'TV-serie med Atle Antonsen som heter søndag',
+      gule: 'fargen gul ikon',
+      måke: 'et bilde av en måke',
     },
     description: 'Jenny (pen), Nissene i skjul, Søndag-serien, og gul måke'
   },
@@ -137,13 +138,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Bygg hint-tekst basert på hva som mangler
-    const hintTexts = missingKeywords.map(keyword => {
-      const hint = rebus.hints[keyword as keyof typeof rebus.hints];
-      return `${keyword}: ${hint}`;
-    }).join('\n');
+    // Bygg generell feedback basert på antall riktige/manglende
+    const foundCount = foundKeywords.length;
+    const totalCount = rebus.keywords.length;
 
-    // Generer mer spesifikk feedback
+    // IKKE send fasit-ord til AI - kun generell info
+    let progressHint = '';
+    if (foundCount === 0) {
+      progressHint = 'Du har ikke funnet noen riktige elementer enda.';
+    } else if (foundCount === 1) {
+      progressHint = 'Du har funnet ett riktig element!';
+    } else if (foundCount === totalCount - 1) {
+      progressHint = 'Du er veldig nære! Kun ett element mangler.';
+    } else if (foundCount > totalCount / 2) {
+      progressHint = `Du er godt i gang! Du har ${foundCount} av ${totalCount} elementer.`;
+    } else {
+      progressHint = `Du har funnet ${foundCount} av ${totalCount} elementer.`;
+    }
+
+    // Generer mer spesifikk feedback UTEN å røpe fasit-ord
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
@@ -151,35 +164,45 @@ export async function POST(request: NextRequest) {
           role: 'system',
           content: `Du er en hjelpsom julenisse som gir feedback på rebus-svar.
 
-VIKTIG RETNINGSLINJER:
-- Gi konkret feedback på hva brukeren har riktig og hva som mangler uten å noen gang røpe ordene direkte
-- IKKE røp svaret direkte, men hint diskret til elementene i rebusen
-- Vær kortfattet (2-3 setninger MAX)
+KRITISK VIKTIG - ALDRI GJØR DETTE:
+- ALDRI nevn ord fra fasit som brukeren ikke har skrevet
+- ALDRI si "du mangler [ord fra fasit]"
+- ALDRI gi direkte ord fra svaret
+- ALDRI nevn spesifikke steder, navn eller ting fra fasit
+
+I STEDET - GI INDIREKTE HINT:
+- Hint til TYPER elementer: "kanskje mer om aktiviteten?", "hvor skal dette skje?"
+- Hint til BILDENE: "se nøye på alle emoji-ene", "hva viser det siste bildet?"
+- Hint til STRUKTUR: "tenk på hele setningen", "hva er stedet?"
 - Vær morsom og julete
-- Ikke vær for ledende - bruk metaforer og indirekte hint
 
 REBUS KONTEKST:
-Rebus inneholder: ${rebus.description}
+Rebusen viser: ${rebus.description}
+Status: ${progressHint}
 
-Brukerens svar: "${userAnswer}"
-Riktig svar: "${rebus.fullAnswer}"
+EKSEMPLER PÅ GOD FEEDBACK basert på fremgang:
 
-Brukeren har funnet: ${foundKeywords.length > 0 ? foundKeywords.join(', ') : 'ingen riktige ord enda'}
-Brukeren mangler: ${missingKeywords.join(', ')}
+Hvis 0 elementer funnet:
+- "Oi da! Her må du se nøye på ALLE bildene fra topp til bunn. Kanskje starte med emoji-ene? 🎅"
+- "Ho ho! Dette krever litt ekstra juletitt! Se grundig på hvert eneste bilde - hva forteller de deg? 🎄"
 
-HINT til manglende elementer (IKKE gi disse direkte, men hint til dem):
-${hintTexts}
+Hvis 1-2 elementer funnet:
+- "God start! Du er på riktig vei, men det er mer å finne. Se nøye på de bildene du kanskje hoppet over! ⭐"
+- "Bra! Men julenissen ser du mangler litt. Hva med resten av bildene? Kanskje noe om stedet? 🎅"
 
-EKSEMPLER PÅ GOD FEEDBACK:
-- Hvis de har "pizza" og "øl" men mangler resten: "Ho ho! God start med maten og drikken 🍕🍺 Men hvor skal dette skje? Tenk på sport og hovedstad!"
-- Hvis de mangler alt: "Oi da! Her må du se nøye på alle bildene. Start med emoji-ene, kanskje? 🎅"
-- Hvis de har nesten alt: "Så nære! Du har nesten alt, men kanskje du må se ekstra nøye på [hint til siste element]? ⭐"
+Hvis 3-4 elementer funnet:
+- "Du er godt i gang! Nå mangler det bare litt. Se ekstra nøye på de siste bildene - hva representerer de? 🎄"
+- "Så nære! Du har nesten alt. Kanskje se en gang til på bildene du ikke har brukt enda? ⭐"
 
-Generer nå en morsom julehilsen (MAX 2-3 setninger) basert på hva brukeren mangler.`,
+Hvis kun 1 element mangler:
+- "Nesten i mål! Du mangler bare ÉN liten ting. Hvilket bilde har du ikke brukt enda? 🎅"
+- "SÅ nære julegaven! Kun ett element gjenstår. Se nøye på alle bildene - hvilket har du glemt? 🎄"
+
+Generer nå en morsom julehilsen (MAX 2-3 setninger) som PASSER fremgangen, UTEN å røpe spesifikke ord.`,
         },
         {
           role: 'user',
-          content: `Brukerens svar: "${userAnswer}"`,
+          content: `Brukerens svar: "${userAnswer}"\n${progressHint}`,
         },
       ],
       temperature: 0.8,
